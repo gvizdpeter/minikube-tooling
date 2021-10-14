@@ -1,0 +1,12 @@
+controller:
+  admissionWebhooks:
+    enabled: true
+
+  metrics:
+    enabled: true
+
+  ingressClassResource:
+    name: ${ingess_class_name}
+    enabled: true
+    default: true
+    controllerValue: "k8s.io/ingress-nginx"

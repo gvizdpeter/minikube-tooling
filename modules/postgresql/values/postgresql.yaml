@@ -1,0 +1,58 @@
+serviceAccount:
+  enabled: true
+
+postgresqlDatabase: ${postgresql_database}
+
+postgresqlUsername: ${postgresql_admin_username}
+
+existingSecret: ${postgresql_admin_password_secret}
+
+extraEnv:
+  - name: ARTIFACTORY_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: ${postgresql_artifactory_secret}
+        key: ${postgresql_artifactory_username_key}
+  - name: ARTIFACTORY_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: ${postgresql_artifactory_secret}
+        key: ${postgresql_artifactory_password_key}
+  - name: ARTIFACTORY_DATABASE
+    valueFrom:
+      secretKeyRef:
+        name: ${postgresql_artifactory_secret}
+        key: ${postgresql_artifactory_database_key}
+
+initdbScripts:
+   create_artifactory_database.sh: |
+      #!/bin/sh
+      export PGPASSWORD=$POSTGRES_PASSWORD
+      echo "SELECT 'CREATE DATABASE $ARTIFACTORY_DATABASE' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$ARTIFACTORY_DATABASE')\gexec" | psql -U $POSTGRES_USER
+      echo "SELECT 'CREATE USER $ARTIFACTORY_USERNAME WITH ENCRYPTED PASSWORD ''$ARTIFACTORY_PASSWORD''' WHERE NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$ARTIFACTORY_USERNAME')\gexec" | psql -U $POSTGRES_USER
+      echo "GRANT ALL PRIVILEGES ON DATABASE $ARTIFACTORY_DATABASE TO $ARTIFACTORY_USERNAME;" | psql -U $POSTGRES_USER
+
+service:
+  type: ClusterIP
+  port: ${postgresql_port}
+
+persistence:
+  enabled: true
+  mountPath: /bitnami/postgresql
+  storageClass: "${storage_class_name}"
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+
+metrics:
+  enabled: true
+  service:
+    type: ClusterIP
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9187"

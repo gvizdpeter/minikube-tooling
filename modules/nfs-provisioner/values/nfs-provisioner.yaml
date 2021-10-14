@@ -1,0 +1,9 @@
+nfs:
+  server: ${nfs_server_host}
+  path: ${nfs_server_path}
+
+storageClass:
+  name: ${nfs_storage_class_name}
+  defaultClass: true
+  reclaimPolicy: Retain
+  onDelete: retain
