@@ -5,7 +5,7 @@ resource "helm_release" "ingress_nginx" {
   version          = "4.0.3"
   namespace        = var.namespace
   create_namespace = true
-  recreate_pods = true
+  recreate_pods    = true
 
   values = [
     templatefile("${path.module}/values/ingress-nginx.yaml", {

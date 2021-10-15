@@ -12,23 +12,38 @@ artifactory:
   ingress:
     enabled: true
     hosts:
-      - ${container_registry_host}
+      - ${artifactory_hostname}
     routerPath: /
     artifactoryPath: /artifactory/
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: ${ingress_class}
       nginx.ingress.kubernetes.io/configuration-snippet: |
        proxy_pass_header   Server;
-       proxy_set_header    X-JFrog-Override-Base-Url http://${container_registry_host};
+       proxy_set_header    X-JFrog-Override-Base-Url ${http_protocol}://${artifactory_hostname};
+
+  postgresql:
+    enabled: false
+
+  database:
+    type: postgresql
+    driver: org.postgresql.Driver
+    secrets:
+      user:
+        name: ${postgresql_artifactory_database_secret}
+        key: ${postgresql_artifactory_database_username_key}
+      password:
+        name: ${postgresql_artifactory_database_secret}
+        key: ${postgresql_artifactory_database_password_key}
+      url:
+        name: ${postgresql_artifactory_database_secret}
+        key: ${postgresql_artifactory_database_url_key}
 
   artifactory:
     # Migration support from 6.x to 7.x
     migration:
       enabled: false
 
-    ## Database configurations
-    ## Use the wait-for-db init container. Set to false to skip
-    waitForDatabase: true
+    waitForDatabase: false
 
     replicaCount: 1
 
@@ -36,13 +51,15 @@ artifactory:
     loggers:
       - artifactory-request.log
 
-    masterKey: ${master_key}
+    ## Alternatively, you can use a pre-existing secret with a key called master-key by specifying masterKeySecretName
+    masterKeySecretName: ${artifactory_admin_secret}
 
-    joinKey: ${join_key}
+    ## Alternatively, you can use a pre-existing secret with a key called join-key by specifying joinKeySecretName
+    joinKeySecretName: ${artifactory_admin_secret}
 
     admin:
-      username: ${admin_username}
-      password: ${admin_password}
+      secret: ${artifactory_admin_secret}
+      dataKey: ${artifactory_admin_creds_secret_key}
 
     resources:
       requests:
@@ -59,24 +76,32 @@ artifactory:
       enabled: true
       mountPath: "/var/opt/jfrog/artifactory"
       accessMode: ReadWriteOnce
-      size: 20Gi
-      storageClassName: ${nfs_storage_class}
+      size: 10Gi
+      storageClassName: ${nfs_storage_class_name}
+
+    extraEnvironmentVariables:
+      - name: ADMIN_CREDS
+        valueFrom:
+          secretKeyRef:
+            name: ${artifactory_admin_secret}
+            key: ${artifactory_admin_creds_secret_key}
 
     configMaps: |
       accept-eula.sh: |
-        curl -X POST -vu ${admin_username}:${admin_password} http://127.0.0.1:8082/artifactory/ui/jcr/eula/accept
+        #!/bin/bash
 
-    customVolumes: |
-      - name: {{ template "artifactory.fullname" . }}-configmaps
-        configMap:
-          name: {{ template "artifactory.fullname" . }}-configmaps
+        RESULT=$(curl -s http://127.0.0.1:8082/router/api/v1/system/readiness)
+        while [ "$RESULT" != "OK" ]; do
+          sleep 10 && RESULT=$(curl -s http://127.0.0.1:8082/router/api/v1/system/readiness)
+        done
+        curl -X POST -vu $(echo "$ADMIN_CREDS" | sed 's/@\*=/:/g') http://127.0.0.1:8082/artifactory/ui/jcr/eula/accept
 
     customVolumeMounts: |
       - name: {{ template "artifactory.fullname" . }}-configmaps
         mountPath: /tmp/accept-eula.sh.ro
         subPath: accept-eula.sh
 
-    postStartCommand: "cp /tmp/accept-eula.sh.ro /tmp/accept-eula.sh && chmod a+x /tmp/accept-eula.sh && /bin/bash /tmp/accept-eula.sh"
+    postStartCommand: "cp /tmp/accept-eula.sh.ro /tmp/accept-eula.sh && chmod a+x /tmp/accept-eula.sh && /bin/bash /tmp/accept-eula.sh &"
 
     systemYaml: |
       router:

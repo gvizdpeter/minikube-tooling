@@ -75,24 +75,24 @@ resource "kubernetes_secret" "postgresql_artifactory" {
 }
 
 resource "helm_release" "postgresql" {
-  name             = "postgresql"
-  repository       = "https://charts.bitnami.com/bitnami"
-  chart            = "postgresql"
-  version          = "10.12.0"
-  namespace        = kubernetes_namespace.postgresql.metadata[0].name
+  name          = "postgresql"
+  repository    = "https://charts.bitnami.com/bitnami"
+  chart         = "postgresql"
+  version       = "10.12.0"
+  namespace     = kubernetes_namespace.postgresql.metadata[0].name
   recreate_pods = true
 
   values = [
     templatefile("${path.module}/values/postgresql.yaml", {
-      postgresql_admin_password_secret = kubernetes_secret.postgresql_admin_password.metadata[0].name
-      postgresql_database = local.postgresql_database
-      postgresql_admin_username = local.postgresql_admin_username
-      postgresql_port = local.postgresql_port
-      postgresql_artifactory_secret = kubernetes_secret.postgresql_artifactory.metadata[0].name
+      postgresql_admin_password_secret    = kubernetes_secret.postgresql_admin_password.metadata[0].name
+      postgresql_database                 = local.postgresql_database
+      postgresql_admin_username           = local.postgresql_admin_username
+      postgresql_port                     = local.postgresql_port
+      postgresql_artifactory_secret       = kubernetes_secret.postgresql_artifactory.metadata[0].name
       postgresql_artifactory_username_key = local.postgresql_artifactory_username_key
       postgresql_artifactory_password_key = local.postgresql_artifactory_password_key
       postgresql_artifactory_database_key = local.postgresql_artifactory_database_key
-      storage_class_name = var.nfs_storage_class_name
+      storage_class_name                  = var.nfs_storage_class_name
     })
   ]
 }

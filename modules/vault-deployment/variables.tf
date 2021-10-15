@@ -27,3 +27,7 @@ variable "vault_unseal_key_base64" {
 variable "ingress_class" {
   type = string
 }
+
+variable "http_secured" {
+  type = bool
+}

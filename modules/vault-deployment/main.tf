@@ -44,7 +44,7 @@ resource "kubernetes_secret" "vault_admin" {
 
 resource "kubernetes_config_map" "vault_init_configmap" {
   metadata {
-    name = "vault-init-script"
+    name      = "vault-init-script"
     namespace = kubernetes_namespace.vault.metadata[0].name
   }
 

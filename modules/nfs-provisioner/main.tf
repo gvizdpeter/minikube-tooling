@@ -5,7 +5,7 @@ resource "helm_release" "nfs_provisioner" {
   version          = "4.0.13"
   namespace        = var.namespace
   create_namespace = true
-  recreate_pods = true
+  recreate_pods    = true
 
   values = [
     templatefile("${path.module}/values/nfs-provisioner.yaml", {
