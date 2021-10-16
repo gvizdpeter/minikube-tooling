@@ -14,9 +14,13 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.1.0"
     }
-    /*vault = {
+    vault = {
       source  = "hashicorp/vault"
       version = "~> 2.24.0"
-    }*/
+    }
+    artifactory = {
+      source  = "jfrog/artifactory"
+      version = "~> 2.2.0"
+    }
   }
 }

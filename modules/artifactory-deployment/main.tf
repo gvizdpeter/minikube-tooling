@@ -79,6 +79,23 @@ resource "kubernetes_secret" "postgresql_artifactory_database_secret" {
   type = "Opaque"
 }
 
+data "vault_generic_secret" "artifactory_license" {
+  path = "${var.vault_secrets_mountpoint}/${var.vault_artifactory_license_path}"
+}
+
+resource "kubernetes_secret" "artifactory_license" {
+  metadata {
+    name      = "artifactory-license"
+    namespace = kubernetes_namespace.artifactory.metadata[0].name
+  }
+
+  data = {
+    "${local.artifactory_license_secret_key}" = "${data.vault_generic_secret.artifactory_license.data["license"]}"
+  }
+
+  type = "Opaque"
+}
+
 resource "helm_release" "artifactory" {
   name          = "artifactory"
   repository    = "https://charts.jfrog.io"
@@ -99,6 +116,9 @@ resource "helm_release" "artifactory" {
       postgresql_artifactory_database_url_key      = local.postgresql_artifactory_database_url_key
       postgresql_artifactory_database_username_key = local.postgresql_artifactory_database_username_key
       postgresql_artifactory_database_password_key = local.postgresql_artifactory_database_password_key
+      artifactory_docker_virtual_repository_name   = local.artifactory_docker_virtual_repository_name
+      artifactory_license_secret                   = kubernetes_secret.artifactory_license.metadata[0].name
+      artifactory_license_secret_key               = local.artifactory_license_secret_key
     })
   ]
 }

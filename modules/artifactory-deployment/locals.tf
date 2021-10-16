@@ -9,4 +9,6 @@ locals {
   postgresql_artifactory_database_url_key      = "postgresql-artifactory-database-url"
   postgresql_artifactory_database_username_key = "postgresql-artifactory-database-username"
   postgresql_artifactory_database_password_key = "postgresql-artifactory-database-password"
+  artifactory_docker_virtual_repository_name   = "docker-virtual"
+  artifactory_license_secret_key               = "artifactory-license"
 }

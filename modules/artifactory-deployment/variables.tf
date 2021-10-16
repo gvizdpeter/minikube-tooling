@@ -52,3 +52,7 @@ variable "ingress_class" {
 variable "http_secured" {
   type = bool
 }
+
+variable "vault_artifactory_license_path" {
+  type = string
+}

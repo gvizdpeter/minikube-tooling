@@ -6,9 +6,6 @@ artifactory:
     ## If not set and create is true, a name is generated using the fullname template
     name: artifactory-service-account
 
-  nginx:
-    enabled: false
-
   ingress:
     enabled: true
     hosts:
@@ -17,9 +14,12 @@ artifactory:
     artifactoryPath: /artifactory/
     annotations:
       kubernetes.io/ingress.class: ${ingress_class}
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
       nginx.ingress.kubernetes.io/configuration-snippet: |
-       proxy_pass_header   Server;
-       proxy_set_header    X-JFrog-Override-Base-Url ${http_protocol}://${artifactory_hostname};
+        proxy_pass_header Server;
+        proxy_set_header X-JFrog-Override-Base-Url ${http_protocol}://${artifactory_hostname};
+        rewrite ^/(v1|v2)/token /artifactory/api/docker/null/$1/token;
+        rewrite ^/(v1|v2)/(.*) /artifactory/api/docker/${artifactory_docker_virtual_repository_name}/$1/$2;
 
   postgresql:
     enabled: false
@@ -39,6 +39,10 @@ artifactory:
         key: ${postgresql_artifactory_database_url_key}
 
   artifactory:
+    image:
+      registry: releases-docker.jfrog.io
+      repository: jfrog/artifactory-pro
+
     # Migration support from 6.x to 7.x
     migration:
       enabled: false
@@ -204,3 +208,10 @@ artifactory:
       replicator:
         enabled: true
       {{- end }}
+
+    license:
+      secret: ${artifactory_license_secret}
+      dataKey: ${artifactory_license_secret_key}
+
+  nginx:
+    enabled: false

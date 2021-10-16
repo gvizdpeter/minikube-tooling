@@ -69,4 +69,18 @@ module "artifactory_deployment" {
   postgresql_address                     = module.postgresql.postgresql_service_address
   postgresql_artifactory_database_secret = module.postgresql.artifactory_database_secret
   artifactory_hostname                   = local.artifactory_hostname
+  vault_artifactory_license_path         = local.vault_artifactory_license_path
+}
+
+module "artifactory_provisioning" {
+  source = "./modules/artifactory-provisioning"
+
+  vault_address                              = module.vault_deployment.vault_address
+  vault_admin_username                       = module.vault_deployment.vault_admin_username
+  vault_admin_password                       = module.vault_deployment.vault_admin_password
+  vault_secrets_mountpoint                   = module.vault_deployment.vault_secrets_mountpoint
+  artifactory_address                        = module.artifactory_deployment.artifactory_address
+  artifactory_admin_vault_path               = module.artifactory_deployment.artifactory_admin_vault_path
+  vault_artifactory_secrets_path             = module.artifactory_deployment.vault_artifactory_secrets_path
+  artifactory_docker_virtual_repository_name = module.artifactory_deployment.artifactory_docker_virtual_repository_name
 }
