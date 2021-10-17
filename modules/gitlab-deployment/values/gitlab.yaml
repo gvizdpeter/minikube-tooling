@@ -2,12 +2,9 @@ global:
   ## https://docs.gitlab.com/charts/installation/deployment#deploy-the-community-edition
   edition: ce
 
-  ## https://docs.gitlab.com/charts/charts/globals#gitlab-version
-  gitlabVersion: 14.3.3
-
   ## https://docs.gitlab.com/charts/charts/globals#configure-host-settings
   hosts:
-    domain: ${gitlab_hostname}
+    domain: ${gitlab_domain}
     https: ${http_secured}
 
   ## https://docs.gitlab.com/charts/charts/globals#configure-ingress-settings
@@ -43,23 +40,13 @@ global:
   ## https://docs.gitlab.com/charts/charts/globals#configure-redis-settings
   redis:
     password:
-      enabled: false
-    master:
-      persistence:
-        enabled: true
-        accessModes:
-          - ReadWriteOnce
-        size: 1Gi
-        storageClass: ${nfs_storage_class_name}
+      enabled: true
+      secret: ${gitlab_redis_password_secret}
+      key: ${gitlab_redis_password_secret_key}
 
   ## https://docs.gitlab.com/charts/charts/globals#configure-minio-settings
   minio:
     enabled: true
-    persistence:
-      enabled: true
-      accessMode: ReadWriteOnce
-      size: 1Gi
-      storageClass: ${nfs_storage_class_name}
     credentials:
       secret: ${gitlab_minio_secret}
 
@@ -93,6 +80,9 @@ prometheus:
 ## See requirements.yaml for current version
 gitlab-runner:
   install: true
+
+  unregisterRunners: true
+
   rbac:
     create: true
   runners:
@@ -100,7 +90,13 @@ gitlab-runner:
     config: |
       [[runners]]
         [runners.kubernetes]
-        image = "ubuntu:18.04"
+        namespace = "${namespace}"
+        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-072b53a1"
+        image = "alpine:latest"
+        pull_policy = "if-not-present"
+        image_pull_secrets = ["${regcred_secret}"]
+        privileged = false
+
         [runners.cache]
           Type = "s3"
           Path = "gitlab-runner"
@@ -110,16 +106,37 @@ gitlab-runner:
             BucketName = "runner-cache"
             BucketLocation = "us-east-1"
             Insecure = true
+
   podAnnotations:
     gitlab.com/prometheus_scrape: "true"
     gitlab.com/prometheus_port: 9252
 
-gitaly:
-  persistence:
-    enabled: true
-    storageClass: ${nfs_storage_class_name}
-    accessMode: ReadWriteOnce
-    size: 1Gi
+gitlab:
+  gitaly:
+    persistence:
+      enabled: true
+      storageClass: ${nfs_storage_class_name}
+      accessMode: ReadWriteOnce
+      size: 1Gi
 
 postgresql:
   install: false
+
+nginx-ingress:
+  enabled: false
+
+redis:
+  master:
+    persistence:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      size: 1Gi
+      storageClass: ${nfs_storage_class_name}
+
+minio:
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: ${nfs_storage_class_name}

@@ -28,6 +28,7 @@ resource "kubernetes_secret" "gitlab_root_password" {
   metadata {
     name      = "gitlab-root-password"
     namespace = kubernetes_namespace.gitlab.metadata[0].name
+    labels    = local.gitlab_secret_labels
   }
 
   data = {
@@ -37,21 +38,18 @@ resource "kubernetes_secret" "gitlab_root_password" {
   type = "Opaque"
 }
 
-data "kubernetes_secret" "postgresql_gitlab_database_secret" {
-  metadata {
-    name      = var.postgresql_gitlab_database_secret.name
-    namespace = var.postgresql_gitlab_database_secret.namespace
-  }
+data "vault_generic_secret" "postgresql_gitlab_database_vault" {
+  path = var.postgresql_gitlab_database_vault_secret
 }
 
 resource "kubernetes_secret" "postgresql_gitlab_database_password_secret" {
   metadata {
     name      = "postgresql-gitlab-database-password-secret"
-    namespace = var.namespace
+    namespace = kubernetes_namespace.gitlab.metadata[0].name
   }
 
   data = {
-    "${local.postgresql_gitlab_database_password_secret_key}" = data.kubernetes_secret.postgresql_gitlab_database_secret.data[var.postgresql_gitlab_database_secret.password_key]
+    "${local.postgresql_gitlab_database_password_secret_key}" = "${data.vault_generic_secret.postgresql_gitlab_database_vault.data["password"]}"
   }
 
   type = "Opaque"
@@ -76,27 +74,47 @@ resource "vault_generic_secret" "gitlab_runner_registration_token" {
 resource "kubernetes_secret" "gitlab_runner_registration_token" {
   metadata {
     name      = "gitlab-runner-registration-token"
-    namespace = var.namespace
+    namespace = kubernetes_namespace.gitlab.metadata[0].name
+    labels    = local.gitlab_secret_labels
   }
 
   data = {
     "${local.gitlab_runner_registration_token_secret_key}" = "${random_password.gitlab_runner_registration_token.result}"
+    "${local.gitlab_runner_token_secret_key}"              = ""
   }
 
   type = "Opaque"
 }
 
+data "vault_generic_secret" "artifactory_regcred_vault_path" {
+  path = var.artifactory_regcred_vault_path
+}
+
+resource "kubernetes_secret" "artifactory_regcred" {
+  metadata {
+    name      = "artifactory-regcred"
+    namespace = kubernetes_namespace.gitlab.metadata[0].name
+  }
+
+  data = {
+    "${local.regcred_secret_key}" = "${data.vault_generic_secret.artifactory_regcred_vault_path.data[local.regcred_secret_key]}"
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+}
+
 resource "helm_release" "gitlab" {
-  name          = "gitlab"
+  name          = local.gitlab_chart_name
   repository    = "https://charts.gitlab.io"
-  chart         = "gitlab"
-  version       = "5.3.3"
+  chart         = local.gitlab_chart_name
+  version       = local.gitlab_chart_version
   namespace     = kubernetes_namespace.gitlab.metadata[0].name
   recreate_pods = true
+  timeout       = 600
 
   values = [
     templatefile("${path.module}/values/gitlab.yaml", {
-      gitlab_hostname                                = var.gitlab_hostname
+      gitlab_domain                                  = var.gitlab_domain
       nfs_storage_class_name                         = var.nfs_storage_class_name
       http_secured                                   = var.http_secured ? "true" : "false"
       ingress_class                                  = var.ingress_class
@@ -104,12 +122,17 @@ resource "helm_release" "gitlab" {
       gitlab_root_password_secret_key                = local.gitlab_root_password_secret_key
       postgresql_address                             = local.postgresql_address
       postgresql_port                                = local.postgresql_port
-      postgresql_gitlab_database_username            = data.kubernetes_secret.postgresql_gitlab_database_secret.data[var.postgresql_gitlab_database_secret.username_key]
-      postgresql_gitlab_database_name                = data.kubernetes_secret.postgresql_gitlab_database_secret.data[var.postgresql_gitlab_database_secret.database_key]
+      postgresql_gitlab_database_username            = data.vault_generic_secret.postgresql_gitlab_database_vault.data["username"]
+      postgresql_gitlab_database_name                = data.vault_generic_secret.postgresql_gitlab_database_vault.data["database"]
       postgresql_gitlab_database_password_secret     = kubernetes_secret.postgresql_gitlab_database_password_secret.metadata[0].name
       postgresql_gitlab_database_password_secret_key = local.postgresql_gitlab_database_password_secret_key
       gitlab_runner_registration_token_secret        = kubernetes_secret.gitlab_runner_registration_token.metadata[0].name
       gitlab_minio_secret                            = kubernetes_secret.gitlab_minio_secret.metadata[0].name
+      gitlab_redis_password_secret                   = kubernetes_secret.gitlab_redis_password.metadata[0].name
+      gitlab_redis_password_secret_key               = local.gitlab_redis_password_secret_key
+      regcred_secret                                 = kubernetes_secret.artifactory_regcred.metadata[0].name
+      regcred_secret_key                             = local.regcred_secret_key
+      namespace                                      = kubernetes_namespace.gitlab.metadata[0].name
     })
   ]
 }

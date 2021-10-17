@@ -57,11 +57,8 @@ resource "kubernetes_secret" "artifactory_admin" {
   type = "Opaque"
 }
 
-data "kubernetes_secret" "postgresql_artifactory_database_secret" {
-  metadata {
-    name      = var.postgresql_artifactory_database_secret.name
-    namespace = var.postgresql_artifactory_database_secret.namespace
-  }
+data "vault_generic_secret" "postgresql_artifactory_database" {
+  path = var.postgresql_artifactory_database_vault_secret
 }
 
 resource "kubernetes_secret" "postgresql_artifactory_database_secret" {
@@ -71,9 +68,9 @@ resource "kubernetes_secret" "postgresql_artifactory_database_secret" {
   }
 
   data = {
-    "${local.postgresql_artifactory_database_url_key}"      = "jdbc:postgresql://${var.postgresql_address}/${data.kubernetes_secret.postgresql_artifactory_database_secret.data[var.postgresql_artifactory_database_secret.database_key]}"
-    "${local.postgresql_artifactory_database_username_key}" = "${data.kubernetes_secret.postgresql_artifactory_database_secret.data[var.postgresql_artifactory_database_secret.username_key]}"
-    "${local.postgresql_artifactory_database_password_key}" = "${data.kubernetes_secret.postgresql_artifactory_database_secret.data[var.postgresql_artifactory_database_secret.password_key]}"
+    "${local.postgresql_artifactory_database_url_key}"      = "jdbc:postgresql://${var.postgresql_address}/${data.vault_generic_secret.postgresql_artifactory_database.data["database"]}"
+    "${local.postgresql_artifactory_database_username_key}" = "${data.vault_generic_secret.postgresql_artifactory_database.data["username"]}"
+    "${local.postgresql_artifactory_database_password_key}" = "${data.vault_generic_secret.postgresql_artifactory_database.data["password"]}"
   }
 
   type = "Opaque"

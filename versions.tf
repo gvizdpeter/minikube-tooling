@@ -22,5 +22,9 @@ terraform {
       source  = "jfrog/artifactory"
       version = "~> 2.2.0"
     }
+    gitlab = {
+      source  = "gitlabhq/gitlab"
+      version = "~> 3.7.0"
+    }
   }
 }

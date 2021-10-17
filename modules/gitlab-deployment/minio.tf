@@ -1,5 +1,5 @@
 resource "random_password" "gitlab_minio_access_key" {
-  length  = 10
+  length  = 20
   special = false
   upper   = true
   lower   = true
@@ -7,7 +7,7 @@ resource "random_password" "gitlab_minio_access_key" {
 }
 
 resource "random_password" "gitlab_minio_secret_key" {
-  length  = 20
+  length  = 40
   special = false
   upper   = true
   lower   = true
@@ -30,6 +30,7 @@ resource "kubernetes_secret" "gitlab_minio_secret" {
   metadata {
     name      = "gitlab-minio-secret"
     namespace = var.namespace
+    labels    = local.gitlab_secret_labels
   }
 
   data = {

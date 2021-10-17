@@ -5,15 +5,15 @@ output "postgresql_service_address" {
   ]
 }
 
-output "artifactory_database_secret" {
-  value = module.artifactory_database.kubernetes_secret
+output "postgresql_artifactory_database_vault_secret" {
+  value = module.artifactory_database.vault_path
   depends_on = [
     helm_release.postgresql
   ]
 }
 
-output "gitlab_database_secret" {
-  value = module.gitlab_database.kubernetes_secret
+output "postgresql_gitlab_database_vault_secret" {
+  value = module.gitlab_database.vault_path
   depends_on = [
     helm_release.postgresql
   ]

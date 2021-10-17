@@ -56,20 +56,20 @@ module "postgresql" {
 module "artifactory_deployment" {
   source = "./modules/artifactory-deployment"
 
-  kubeconfig_path                        = local.kubeconfig_path
-  kubeconfig_context                     = local.kubeconfig_context
-  namespace                              = "artifactory"
-  nfs_storage_class_name                 = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class                          = module.ingress_nginx.ingress_class
-  http_secured                           = local.http_secured
-  vault_address                          = module.vault_deployment.vault_address
-  vault_admin_username                   = module.vault_deployment.vault_admin_username
-  vault_admin_password                   = module.vault_deployment.vault_admin_password
-  vault_secrets_mountpoint               = module.vault_deployment.vault_secrets_mountpoint
-  postgresql_address                     = module.postgresql.postgresql_service_address
-  postgresql_artifactory_database_secret = module.postgresql.artifactory_database_secret
-  artifactory_hostname                   = local.artifactory_hostname
-  vault_artifactory_license_path         = local.vault_artifactory_license_path
+  kubeconfig_path                              = local.kubeconfig_path
+  kubeconfig_context                           = local.kubeconfig_context
+  namespace                                    = "artifactory"
+  nfs_storage_class_name                       = module.nfs_provisioner.nfs_storage_class_name
+  ingress_class                                = module.ingress_nginx.ingress_class
+  http_secured                                 = local.http_secured
+  vault_address                                = module.vault_deployment.vault_address
+  vault_admin_username                         = module.vault_deployment.vault_admin_username
+  vault_admin_password                         = module.vault_deployment.vault_admin_password
+  vault_secrets_mountpoint                     = module.vault_deployment.vault_secrets_mountpoint
+  postgresql_address                           = module.postgresql.postgresql_service_address
+  postgresql_artifactory_database_vault_secret = module.postgresql.postgresql_artifactory_database_vault_secret
+  artifactory_hostname                         = local.artifactory_hostname
+  vault_artifactory_license_path               = local.vault_artifactory_license_path
 }
 
 module "artifactory_provisioning" {
@@ -88,17 +88,34 @@ module "artifactory_provisioning" {
 module "gitlab_deployment" {
   source = "./modules/gitlab-deployment"
 
-  vault_address                     = module.vault_deployment.vault_address
-  vault_admin_username              = module.vault_deployment.vault_admin_username
-  vault_admin_password              = module.vault_deployment.vault_admin_password
-  vault_secrets_mountpoint          = module.vault_deployment.vault_secrets_mountpoint
-  postgresql_address                = module.postgresql.postgresql_service_address
-  postgresql_gitlab_database_secret = module.postgresql.gitlab_database_secret
-  kubeconfig_path                   = local.kubeconfig_path
-  kubeconfig_context                = local.kubeconfig_context
-  namespace                         = "gitlab"
-  nfs_storage_class_name            = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class                     = module.ingress_nginx.ingress_class
-  http_secured                      = local.http_secured
-  gitlab_hostname                   = local.gitlab_hostname
+  vault_address                           = module.vault_deployment.vault_address
+  vault_admin_username                    = module.vault_deployment.vault_admin_username
+  vault_admin_password                    = module.vault_deployment.vault_admin_password
+  vault_secrets_mountpoint                = module.vault_deployment.vault_secrets_mountpoint
+  postgresql_address                      = module.postgresql.postgresql_service_address
+  postgresql_gitlab_database_vault_secret = module.postgresql.postgresql_gitlab_database_vault_secret
+  kubeconfig_path                         = local.kubeconfig_path
+  kubeconfig_context                      = local.kubeconfig_context
+  namespace                               = "gitlab"
+  nfs_storage_class_name                  = module.nfs_provisioner.nfs_storage_class_name
+  ingress_class                           = module.ingress_nginx.ingress_class
+  http_secured                            = local.http_secured
+  gitlab_domain                           = local.gitlab_domain
+  artifactory_regcred_vault_path          = module.artifactory_provisioning.artifactory_regcred_vault_path
+  artifactory_address                     = module.artifactory_deployment.artifactory_address
+}
+
+module "gitlab_provisioning" {
+  source = "./modules/gitlab-provisioning"
+
+  vault_address                      = module.vault_deployment.vault_address
+  vault_admin_username               = module.vault_deployment.vault_admin_username
+  vault_admin_password               = module.vault_deployment.vault_admin_password
+  vault_secrets_mountpoint           = module.vault_deployment.vault_secrets_mountpoint
+  artifactory_address                = module.artifactory_deployment.artifactory_address
+  vault_gitlab_approle_secret_path   = module.vault_provisioning.vault_gitlab_approle_secret_path
+  vault_gitlab_token_path            = local.vault_gitlab_token_path
+  gitlab_address                     = module.gitlab_deployment.gitlab_address
+  artifactory_docker_user_vault_path = module.artifactory_provisioning.artifactory_docker_user_vault_path
+  artifactory_helm_user_vault_path   = module.artifactory_provisioning.artifactory_helm_user_vault_path
 }

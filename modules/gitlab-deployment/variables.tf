@@ -34,18 +34,12 @@ variable "http_secured" {
   type = bool
 }
 
-variable "gitlab_hostname" {
+variable "gitlab_domain" {
   type = string
 }
 
-variable "postgresql_gitlab_database_secret" {
-  type = object({
-    name         = string
-    namespace    = string
-    username_key = string
-    password_key = string
-    database_key = string
-  })
+variable "postgresql_gitlab_database_vault_secret" {
+  type = string
 }
 
 variable "postgresql_address" {
@@ -53,5 +47,13 @@ variable "postgresql_address" {
 }
 
 variable "ingress_class" {
+  type = string
+}
+
+variable "artifactory_regcred_vault_path" {
+  type = string
+}
+
+variable "artifactory_address" {
   type = string
 }

@@ -34,14 +34,8 @@ variable "postgresql_address" {
   type = string
 }
 
-variable "postgresql_artifactory_database_secret" {
-  type = object({
-    name         = string
-    namespace    = string
-    username_key = string
-    password_key = string
-    database_key = string
-  })
+variable "postgresql_artifactory_database_vault_secret" {
+  type = string
 }
 
 variable "artifactory_hostname" {

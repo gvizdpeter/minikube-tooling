@@ -9,5 +9,6 @@ locals {
   kubeconfig_context             = "minikube"
   artifactory_hostname           = "artifactory.minikube.com"
   vault_artifactory_license_path = "artifactory/license"
-  gitlab_hostname                = "gitlab.minikube.com"
+  gitlab_domain                  = "minikube.com"
+  vault_gitlab_token_path        = "gitlab/root-token"
 }

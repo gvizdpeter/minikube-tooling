@@ -40,7 +40,7 @@ resource "vault_generic_secret" "gitlab_approle" {
   path = "${var.vault_secrets_mountpoint}/${local.vault_approle_secrets_path}/${vault_approle_auth_backend_role.gitlab_approle.role_name}"
 
   data_json = jsonencode({
-    "role_id"   = "${vault_approle_auth_backend_role.gitlab_approle.role_id}"
-    "secret_id" = "${vault_approle_auth_backend_role_secret_id.gitlab_approle_id.secret_id}"
+    "role-id"   = "${vault_approle_auth_backend_role.gitlab_approle.role_id}"
+    "secret-id" = "${vault_approle_auth_backend_role_secret_id.gitlab_approle_id.secret_id}"
   })
 }
