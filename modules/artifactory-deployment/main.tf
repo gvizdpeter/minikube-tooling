@@ -71,9 +71,9 @@ resource "kubernetes_secret" "postgresql_artifactory_database_secret" {
   }
 
   data = {
-    "${local.postgresql_artifactory_database_url_key}"      = "jdbc:postgresql://${var.postgresql_address}/${data.kubernetes_secret.postgresql_artifactory_database_secret.data["artifactory-database"]}"
-    "${local.postgresql_artifactory_database_username_key}" = "${data.kubernetes_secret.postgresql_artifactory_database_secret.data["artifactory-username"]}"
-    "${local.postgresql_artifactory_database_password_key}" = "${data.kubernetes_secret.postgresql_artifactory_database_secret.data["artifactory-password"]}"
+    "${local.postgresql_artifactory_database_url_key}"      = "jdbc:postgresql://${var.postgresql_address}/${data.kubernetes_secret.postgresql_artifactory_database_secret.data[var.postgresql_artifactory_database_secret.database_key]}"
+    "${local.postgresql_artifactory_database_username_key}" = "${data.kubernetes_secret.postgresql_artifactory_database_secret.data[var.postgresql_artifactory_database_secret.username_key]}"
+    "${local.postgresql_artifactory_database_password_key}" = "${data.kubernetes_secret.postgresql_artifactory_database_secret.data[var.postgresql_artifactory_database_secret.password_key]}"
   }
 
   type = "Opaque"

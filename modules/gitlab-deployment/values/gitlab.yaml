@@ -1,0 +1,125 @@
+global:
+  ## https://docs.gitlab.com/charts/installation/deployment#deploy-the-community-edition
+  edition: ce
+
+  ## https://docs.gitlab.com/charts/charts/globals#gitlab-version
+  gitlabVersion: 14.3.3
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-host-settings
+  hosts:
+    domain: ${gitlab_hostname}
+    https: ${http_secured}
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-ingress-settings
+  ingress:
+    configureCertmanager: false
+    provider: nginx
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: ${ingress_class}
+    tls:
+      enabled: ${http_secured}
+    path: /
+    pathType: Prefix
+
+  ## Initial root password for this GitLab installation
+  ## Secret created according to https://docs.gitlab.com/charts/installation/secrets#initial-root-password
+  ## If allowing shared-secrets generation, this is OPTIONAL.
+  initialRootPassword:
+    secret: ${gitlab_root_password_secret}
+    key: ${gitlab_root_password_secret_key}
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-postgresql-settings
+  psql:
+    password:
+      useSecret: true
+      secret: ${postgresql_gitlab_database_password_secret}
+      key: ${postgresql_gitlab_database_password_secret_key}
+    host: ${postgresql_address}
+    port: ${postgresql_port}
+    username: ${postgresql_gitlab_database_username}
+    database: ${postgresql_gitlab_database_name}
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-redis-settings
+  redis:
+    password:
+      enabled: false
+    master:
+      persistence:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 1Gi
+        storageClass: ${nfs_storage_class_name}
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-minio-settings
+  minio:
+    enabled: true
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      size: 1Gi
+      storageClass: ${nfs_storage_class_name}
+    credentials:
+      secret: ${gitlab_minio_secret}
+
+  ## GitLab Runner
+  ## Secret created according to https://docs.gitlab.com/charts/installation/secrets#gitlab-runner-secret
+  ## If allowing shared-secrets generation, this is OPTIONAL.
+  runner:
+    registrationToken:
+      secret: ${gitlab_runner_registration_token_secret}
+
+  ## Timezone for containers.
+  time_zone: Europe/Prague
+
+  ## https://docs.gitlab.com/charts/charts/globals#service-accounts
+  serviceAccount:
+    create: true
+
+## End of global
+
+## Installation & configuration of jetstack/cert-manager
+## See requirements.yaml for current version
+certmanager:
+  install: false
+
+## Installation & configuration of stable/prometheus
+## See requirements.yaml for current version
+prometheus:
+  install: false
+
+## Installation & configuration of gitlab/gitlab-runner
+## See requirements.yaml for current version
+gitlab-runner:
+  install: true
+  rbac:
+    create: true
+  runners:
+    locked: false
+    config: |
+      [[runners]]
+        [runners.kubernetes]
+        image = "ubuntu:18.04"
+        [runners.cache]
+          Type = "s3"
+          Path = "gitlab-runner"
+          Shared = true
+          [runners.cache.s3]
+            ServerAddress = {{ include "gitlab-runner.cache-tpl.s3ServerAddress" . }}
+            BucketName = "runner-cache"
+            BucketLocation = "us-east-1"
+            Insecure = true
+  podAnnotations:
+    gitlab.com/prometheus_scrape: "true"
+    gitlab.com/prometheus_port: 9252
+
+gitaly:
+  persistence:
+    enabled: true
+    storageClass: ${nfs_storage_class_name}
+    accessMode: ReadWriteOnce
+    size: 1Gi
+
+postgresql:
+  install: false

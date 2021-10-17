@@ -30,11 +30,15 @@ variable "kubeconfig_context" {
   type = string
 }
 
-variable "postgresql_address" {
+variable "http_secured" {
+  type = bool
+}
+
+variable "gitlab_hostname" {
   type = string
 }
 
-variable "postgresql_artifactory_database_secret" {
+variable "postgresql_gitlab_database_secret" {
   type = object({
     name         = string
     namespace    = string
@@ -44,18 +48,10 @@ variable "postgresql_artifactory_database_secret" {
   })
 }
 
-variable "artifactory_hostname" {
+variable "postgresql_address" {
   type = string
 }
 
 variable "ingress_class" {
-  type = string
-}
-
-variable "http_secured" {
-  type = bool
-}
-
-variable "vault_artifactory_license_path" {
   type = string
 }

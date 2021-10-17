@@ -84,3 +84,21 @@ module "artifactory_provisioning" {
   vault_artifactory_secrets_path             = module.artifactory_deployment.vault_artifactory_secrets_path
   artifactory_docker_virtual_repository_name = module.artifactory_deployment.artifactory_docker_virtual_repository_name
 }
+
+module "gitlab_deployment" {
+  source = "./modules/gitlab-deployment"
+
+  vault_address                     = module.vault_deployment.vault_address
+  vault_admin_username              = module.vault_deployment.vault_admin_username
+  vault_admin_password              = module.vault_deployment.vault_admin_password
+  vault_secrets_mountpoint          = module.vault_deployment.vault_secrets_mountpoint
+  postgresql_address                = module.postgresql.postgresql_service_address
+  postgresql_gitlab_database_secret = module.postgresql.gitlab_database_secret
+  kubeconfig_path                   = local.kubeconfig_path
+  kubeconfig_context                = local.kubeconfig_context
+  namespace                         = "gitlab"
+  nfs_storage_class_name            = module.nfs_provisioner.nfs_storage_class_name
+  ingress_class                     = module.ingress_nginx.ingress_class
+  http_secured                      = local.http_secured
+  gitlab_hostname                   = local.gitlab_hostname
+}
