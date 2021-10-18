@@ -1,6 +1,6 @@
 # Minikube Tooling
 
-Tooling stack for minikube, that consists of:
+Tooling stack for minikube provisioned by Terraform, that consists of:
 * [Nginx Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
 * [NFS Subdir Provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner)
 * [HashiCorp Vault](https://www.vaultproject.io/)
