@@ -1,0 +1,10 @@
+apiService:
+  create: true
+
+securePort: 4443
+
+extraArgs:
+  kubelet-preferred-address-types: InternalIP,ExternalIP,Hostname
+  kubelet-use-node-status-port: true
+  metric-resolution: 15s
+  kubelet-insecure-tls: true

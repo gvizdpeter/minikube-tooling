@@ -1,3 +1,11 @@
+module "metrics_server" {
+  source = "./modules/metrics-server"
+
+  kubeconfig_path    = local.kubeconfig_path
+  kubeconfig_context = local.kubeconfig_context
+  namespace          = "kube-system"
+}
+
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
 
@@ -118,4 +126,15 @@ module "gitlab_provisioning" {
   gitlab_address                     = module.gitlab_deployment.gitlab_address
   artifactory_docker_user_vault_path = module.artifactory_provisioning.artifactory_docker_user_vault_path
   artifactory_helm_user_vault_path   = module.artifactory_provisioning.artifactory_helm_user_vault_path
+}
+
+module "prometheus" {
+  source = "./modules/prometheus"
+
+  kubeconfig_path        = local.kubeconfig_path
+  kubeconfig_context     = local.kubeconfig_context
+  namespace              = "prometheus"
+  nfs_storage_class_name = module.nfs_provisioner.nfs_storage_class_name
+  ingress_class          = module.ingress_nginx.ingress_class
+  prometheus_hostname    = local.prometheus_hostname
 }

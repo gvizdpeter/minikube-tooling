@@ -11,4 +11,5 @@ locals {
   vault_artifactory_license_path = "artifactory/license"
   gitlab_domain                  = "minikube.com"
   vault_gitlab_token_path        = "gitlab/root-token"
+  prometheus_hostname            = "prometheus.minikube.com"
 }
