@@ -1,6 +1,9 @@
 resource "kubernetes_namespace" "vault" {
   metadata {
     name = var.namespace
+    labels = {
+      istio-injection = "enabled"
+    }
   }
 }
 
@@ -81,39 +84,15 @@ resource "helm_release" "vault" {
   ]
 }
 
-resource "kubernetes_manifest" "vault_ingress" {
-  manifest = {
-    "apiVersion" = "networking.k8s.io/v1"
-    "kind"       = "Ingress"
-    "metadata" = {
-      "annotations" = {
-        "kubernetes.io/ingress.class" = var.ingress_class
-      }
-      "name"      = "vault-ingress"
-      "namespace" = helm_release.vault.namespace
-    }
-    "spec" = {
-      "rules" = [
-        {
-          "host" = var.vault_hostname
-          "http" = {
-            "paths" = [
-              {
-                "backend" = {
-                  "service" = {
-                    "name" = "vault-ui"
-                    "port" = {
-                      "number" = 8200
-                    }
-                  }
-                }
-                "path"     = "/"
-                "pathType" = "Prefix"
-              },
-            ]
-          }
-        },
-      ]
-    }
-  }
+module "vault_ui_virtual_service" {
+  source = "./../istio-virtual-service"
+
+  namespace = kubernetes_namespace.vault.metadata[0].name
+  domain = var.vault_domain
+  subdomain = var.vault_subdomain
+  service_name = "vault-ui"
+  service_port = 8200
+  istio_ingress_gateway_name = var.istio_ingress_gateway_name
+  kubeconfig_path = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
 }

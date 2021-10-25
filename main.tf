@@ -6,15 +6,6 @@ module "metrics_server" {
   namespace          = "kube-system"
 }
 
-module "ingress_nginx" {
-  source = "./modules/ingress-nginx"
-
-  kubeconfig_path    = local.kubeconfig_path
-  kubeconfig_context = local.kubeconfig_context
-  namespace          = "ingress-nginx"
-  ingess_class_name  = local.ingess_class_name
-}
-
 module "nfs_provisioner" {
   source = "./modules/nfs-provisioner"
 
@@ -26,6 +17,27 @@ module "nfs_provisioner" {
   nfs_storage_class_name = local.nfs_storage_class_name
 }
 
+module "istio" {
+  source = "./modules/istio"
+
+  kubeconfig_path    = local.kubeconfig_path
+  kubeconfig_context = local.kubeconfig_context
+  namespace          = "istio-system"
+  domain             = local.domain
+}
+
+module "prometheus" {
+  source = "./modules/prometheus"
+
+  kubeconfig_path        = local.kubeconfig_path
+  kubeconfig_context     = local.kubeconfig_context
+  namespace              = "prometheus"
+  nfs_storage_class_name = module.nfs_provisioner.nfs_storage_class_name
+  prometheus_subdomain   = local.prometheus_subdomain
+  prometheus_domain      = local.domain
+  istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
+}
+
 module "vault_deployment" {
   source = "./modules/vault-deployment"
 
@@ -33,10 +45,10 @@ module "vault_deployment" {
   kubeconfig_context      = local.kubeconfig_context
   namespace               = "vault"
   nfs_storage_class_name  = module.nfs_provisioner.nfs_storage_class_name
-  vault_hostname          = local.vault_hostname
-  ingress_class           = module.ingress_nginx.ingress_class
-  http_secured            = local.http_secured
-  vault_unseal_key_base64 = "yHj8F8zr+KfmbNLFDzF02uB2QWn1vJR+YMbPWkFrvWs="
+  vault_unseal_key_base64 = "vD6xiXoifA5pXdFJ+se9mDE0egsFQibpheT47e1nmg="
+  vault_domain = local.domain
+  vault_subdomain = local.vault_subdomain
+  istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
 }
 
 module "vault_provisioning" {
@@ -68,7 +80,7 @@ module "artifactory_deployment" {
   kubeconfig_context                           = local.kubeconfig_context
   namespace                                    = "artifactory"
   nfs_storage_class_name                       = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class                                = module.ingress_nginx.ingress_class
+  ingress_class                                = ""
   http_secured                                 = local.http_secured
   vault_address                                = module.vault_deployment.vault_address
   vault_admin_username                         = module.vault_deployment.vault_admin_username
@@ -106,7 +118,7 @@ module "gitlab_deployment" {
   kubeconfig_context                      = local.kubeconfig_context
   namespace                               = "gitlab"
   nfs_storage_class_name                  = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class                           = module.ingress_nginx.ingress_class
+  ingress_class                           = ""
   http_secured                            = local.http_secured
   gitlab_domain                           = local.gitlab_domain
   artifactory_regcred_vault_path          = module.artifactory_provisioning.artifactory_regcred_vault_path
@@ -126,15 +138,4 @@ module "gitlab_provisioning" {
   gitlab_address                     = module.gitlab_deployment.gitlab_address
   artifactory_docker_user_vault_path = module.artifactory_provisioning.artifactory_docker_user_vault_path
   artifactory_helm_user_vault_path   = module.artifactory_provisioning.artifactory_helm_user_vault_path
-}
-
-module "prometheus" {
-  source = "./modules/prometheus"
-
-  kubeconfig_path        = local.kubeconfig_path
-  kubeconfig_context     = local.kubeconfig_context
-  namespace              = "prometheus"
-  nfs_storage_class_name = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class          = module.ingress_nginx.ingress_class
-  prometheus_hostname    = local.prometheus_hostname
 }

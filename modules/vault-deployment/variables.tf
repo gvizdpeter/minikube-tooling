@@ -14,7 +14,11 @@ variable "nfs_storage_class_name" {
   type = string
 }
 
-variable "vault_hostname" {
+variable "vault_domain" {
+  type = string
+}
+
+variable "vault_subdomain" {
   type = string
 }
 
@@ -24,10 +28,6 @@ variable "vault_unseal_key_base64" {
   default   = ""
 }
 
-variable "ingress_class" {
+variable "istio_ingress_gateway_name" {
   type = string
-}
-
-variable "http_secured" {
-  type = bool
 }

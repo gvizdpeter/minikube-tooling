@@ -26,5 +26,17 @@ terraform {
       source  = "gitlabhq/gitlab"
       version = "~> 3.7.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 3.1.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.1.0"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.13.0"
+    }
   }
 }

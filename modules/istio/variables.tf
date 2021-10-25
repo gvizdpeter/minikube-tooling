@@ -10,6 +10,6 @@ variable "namespace" {
   type = string
 }
 
-variable "ingess_class_name" {
+variable "domain" {
   type = string
 }
