@@ -61,6 +61,17 @@ resource "kubernetes_config_map" "vault_init_configmap" {
   }
 }
 
+module "vault_pvc" {
+  source = "./../pvc"
+
+  namespace = kubernetes_namespace.vault.metadata[0].name
+  name = "vault-pvc"
+  size = "1Gi"
+  kubeconfig_path = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  storage_class_name = var.nfs_storage_class_name
+}
+
 resource "helm_release" "vault" {
   name          = "vault"
   repository    = "https://helm.releases.hashicorp.com"
@@ -71,7 +82,7 @@ resource "helm_release" "vault" {
 
   values = [
     templatefile("${path.module}/values/vault.yaml", {
-      storage_class_name                  = var.nfs_storage_class_name
+      pvc_name = module.vault_pvc.name
       vault_unseal_key_base64_secret_name = kubernetes_secret.vault_unseal_key.metadata[0].name
       vault_unseal_key_base64_secret_key  = local.vault_unseal_key_base64_secret_key
       vault_admin_secret_name             = kubernetes_secret.vault_admin.metadata[0].name
@@ -84,14 +95,18 @@ resource "helm_release" "vault" {
   ]
 }
 
-module "vault_ui_virtual_service" {
+module "vault_virtual_service" {
   source = "./../istio-virtual-service"
 
+  name = "vault"
   namespace = kubernetes_namespace.vault.metadata[0].name
   domain = var.vault_domain
   subdomain = var.vault_subdomain
-  service_name = "vault-ui"
-  service_port = 8200
+  routes = [{
+    service_name = "vault"
+    service_port = 8200
+    prefix = "/"
+  }]
   istio_ingress_gateway_name = var.istio_ingress_gateway_name
   kubeconfig_path = var.kubeconfig_path
   kubeconfig_context = var.kubeconfig_context

@@ -26,11 +26,15 @@ resource "helm_release" "prometheus" {
 module "prometheus_virtual_service" {
   source = "./../istio-virtual-service"
 
+  name = "prometheus"
   namespace = kubernetes_namespace.prometheus.metadata[0].name
   domain = var.prometheus_domain
   subdomain = var.prometheus_subdomain
-  service_name = "prometheus-server"
-  service_port = 80
+  routes = [{
+    service_name = "prometheus-server"
+    service_port = 80
+    prefix = "/"
+  }]
   istio_ingress_gateway_name = var.istio_ingress_gateway_name
   kubeconfig_path = var.kubeconfig_path
   kubeconfig_context = var.kubeconfig_context

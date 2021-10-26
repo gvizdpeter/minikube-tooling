@@ -59,12 +59,7 @@ service:
   port: ${postgresql_port}
 
 persistence:
-  enabled: true
-  mountPath: /bitnami/postgresql
-  storageClass: "${storage_class_name}"
-  accessModes:
-    - ReadWriteOnce
-  size: 1Gi
+  existingClaim: ${pvc_name}
 
 resources:
   requests:

@@ -3,8 +3,8 @@ resource "kubectl_manifest" "istio_virtual_service" {
     namespace = var.namespace
     domain = var.domain
     subdomain = var.subdomain
-    service_name = var.service_name
-    service_port = var.service_port
+    routes = var.routes
     istio_ingress_gateway_name = var.istio_ingress_gateway_name
+    name = var.name
   })
 }

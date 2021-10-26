@@ -10,7 +10,7 @@ locals {
   kubeconfig_context             = "minikube"
   artifactory_hostname           = "artifactory.minikube.com"
   vault_artifactory_license_path = "artifactory/license"
-  gitlab_domain                  = "minikube.com"
+  gitlab_subdomain               = "gitlab"
   vault_gitlab_token_path        = "gitlab/root-token"
   prometheus_subdomain           = "prometheus"
 }

@@ -18,14 +18,18 @@ variable "subdomain" {
   type = string
 }
 
-variable "service_name" {
+variable "istio_ingress_gateway_name" {
   type = string
 }
 
-variable "service_port" {
-  type = number
+variable "routes" {
+  type = list(object({
+    service_name = string
+    service_port = number
+    prefix = string
+  }))
 }
 
-variable "istio_ingress_gateway_name" {
+variable "name" {
   type = string
 }

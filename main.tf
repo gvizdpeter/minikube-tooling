@@ -45,7 +45,7 @@ module "vault_deployment" {
   kubeconfig_context      = local.kubeconfig_context
   namespace               = "vault"
   nfs_storage_class_name  = module.nfs_provisioner.nfs_storage_class_name
-  vault_unseal_key_base64 = "vD6xiXoifA5pXdFJ+se9mDE0egsFQibpheT47e1nmg="
+  vault_unseal_key_base64 = "JzAdv8cdJvPEgTVAQ5A8sOSGZnF+f3azSb47E+dpjCM="
   vault_domain = local.domain
   vault_subdomain = local.vault_subdomain
   istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
@@ -118,11 +118,12 @@ module "gitlab_deployment" {
   kubeconfig_context                      = local.kubeconfig_context
   namespace                               = "gitlab"
   nfs_storage_class_name                  = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class                           = ""
-  http_secured                            = local.http_secured
-  gitlab_domain                           = local.gitlab_domain
-  artifactory_regcred_vault_path          = module.artifactory_provisioning.artifactory_regcred_vault_path
-  artifactory_address                     = module.artifactory_deployment.artifactory_address
+  gitlab_domain                           = local.domain
+  gitlab_subdomain                        = local.gitlab_subdomain
+  //artifactory_regcred_vault_path          = module.artifactory_provisioning.artifactory_regcred_vault_path
+  //artifactory_address                     = module.artifactory_deployment.artifactory_address
+  istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
+  istio_tls_ca_crt = module.istio.istio_tls_ca_crt
 }
 
 module "gitlab_provisioning" {
