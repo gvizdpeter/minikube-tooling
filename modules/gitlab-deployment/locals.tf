@@ -13,7 +13,7 @@ locals {
   regcred_secret_key                             = ".dockerconfigjson"
   docker_daemon_configmap_key                    = "daemon.json"
   gitlab_chart_name                              = "gitlab"
-  gitlab_chart_version                           = "4.12.12"
+  gitlab_chart_version                           = "5.4.0"
   gitlab_secret_labels = {
     "app"      = local.gitlab_chart_name
     "chart"    = "${local.gitlab_chart_name}-${local.gitlab_chart_version}"

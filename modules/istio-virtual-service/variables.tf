@@ -26,7 +26,7 @@ variable "routes" {
   type = list(object({
     service_name = string
     service_port = number
-    prefix = string
+    prefix       = string
   }))
 }
 

@@ -7,19 +7,9 @@ artifactory:
     name: artifactory-service-account
 
   ingress:
-    enabled: true
+    enabled: false
     hosts:
-      - ${artifactory_hostname}
-    routerPath: /
-    artifactoryPath: /artifactory/
-    annotations:
-      kubernetes.io/ingress.class: ${ingress_class}
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
-      nginx.ingress.kubernetes.io/configuration-snippet: |
-        proxy_pass_header Server;
-        proxy_set_header X-JFrog-Override-Base-Url ${http_protocol}://${artifactory_hostname};
-        rewrite ^/(v1|v2)/token /artifactory/api/docker/null/$1/token;
-        rewrite ^/(v1|v2)/(.*) /artifactory/api/docker/${artifactory_docker_virtual_repository_name}/$1/$2;
+      - ${artifactory_subdomain}.${artifactory_domain}
 
   postgresql:
     enabled: false
@@ -214,4 +204,61 @@ artifactory:
       dataKey: ${artifactory_license_secret_key}
 
   nginx:
-    enabled: false
+    enabled: true
+    http:
+      enabled: true
+      internalPort: 80
+    https:
+      enabled: false
+    ssh:
+      enabled: false
+
+    service:
+      type: ClusterIP
+
+    artifactoryConf: |
+      ## server configuration
+      server {
+        listen {{ .Values.nginx.http.internalPort }};
+
+        server_name ~(?<repo>.+)\.{{ include "artifactory.fullname" . }} {{ include "artifactory.fullname" . }}
+        {{- range .Values.ingress.hosts -}}
+          {{- if contains "." . -}}
+            {{ "" | indent 0 }} ~(?<repo>.+)\.{{ . }}
+          {{- end -}}
+        {{- end -}};
+
+        if ($http_x_forwarded_proto = '') {
+          set $http_x_forwarded_proto  $scheme;
+        }
+        ## Application specific logs
+        ## access_log /var/log/nginx/artifactory-access.log timing;
+        ## error_log /var/log/nginx/artifactory-error.log;
+        rewrite ^/artifactory/?$ / redirect;
+
+        rewrite ^/(v1|v2)/(.*) /artifactory/api/docker/${artifactory_docker_virtual_repository_name}/$1/$2 break;
+
+        chunked_transfer_encoding on;
+        client_max_body_size 0;
+
+        location / {
+          proxy_read_timeout  900;
+          proxy_pass_header   Server;
+          proxy_cookie_path   ~*^/.* /;
+          proxy_pass          {{ include "artifactory.scheme" . }}://{{ include "artifactory.fullname" . }}:{{ .Values.artifactory.externalPort }}/;
+          proxy_set_header    X-JFrog-Override-Base-Url $http_x_forwarded_proto://$host:$server_port;
+          proxy_set_header    X-Forwarded-Port  $server_port;
+          proxy_set_header    X-Forwarded-Proto $http_x_forwarded_proto;
+          proxy_set_header    Host              $http_host;
+          proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+          add_header Strict-Transport-Security always;
+
+          location /artifactory/ {
+            if ( $request_uri ~ ^/artifactory/(.*)$ ) {
+              proxy_pass       {{ include "artifactory.scheme" . }}://{{ include "artifactory.fullname" . }}:{{ .Values.artifactory.externalArtifactoryPort }}/artifactory/$1;
+            }
+            proxy_pass         {{ include "artifactory.scheme" . }}://{{ include "artifactory.fullname" . }}:{{ .Values.artifactory.externalArtifactoryPort }}/artifactory/;
+          }
+        }
+      }
+

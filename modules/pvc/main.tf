@@ -1,6 +1,6 @@
 resource "kubernetes_persistent_volume_claim" "pvc" {
   metadata {
-    name = var.name
+    name      = var.name
     namespace = var.namespace
   }
   spec {

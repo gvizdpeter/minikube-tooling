@@ -29,25 +29,25 @@ module "istio" {
 module "prometheus" {
   source = "./modules/prometheus"
 
-  kubeconfig_path        = local.kubeconfig_path
-  kubeconfig_context     = local.kubeconfig_context
-  namespace              = "prometheus"
-  nfs_storage_class_name = module.nfs_provisioner.nfs_storage_class_name
-  prometheus_subdomain   = local.prometheus_subdomain
-  prometheus_domain      = local.domain
+  kubeconfig_path            = local.kubeconfig_path
+  kubeconfig_context         = local.kubeconfig_context
+  namespace                  = "prometheus"
+  nfs_storage_class_name     = module.nfs_provisioner.nfs_storage_class_name
+  prometheus_subdomain       = local.prometheus_subdomain
+  prometheus_domain          = local.domain
   istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
 }
 
 module "vault_deployment" {
   source = "./modules/vault-deployment"
 
-  kubeconfig_path         = local.kubeconfig_path
-  kubeconfig_context      = local.kubeconfig_context
-  namespace               = "vault"
-  nfs_storage_class_name  = module.nfs_provisioner.nfs_storage_class_name
-  vault_unseal_key_base64 = "JzAdv8cdJvPEgTVAQ5A8sOSGZnF+f3azSb47E+dpjCM="
-  vault_domain = local.domain
-  vault_subdomain = local.vault_subdomain
+  kubeconfig_path            = local.kubeconfig_path
+  kubeconfig_context         = local.kubeconfig_context
+  namespace                  = "vault"
+  nfs_storage_class_name     = module.nfs_provisioner.nfs_storage_class_name
+  vault_unseal_key_base64    = "JzAdv8cdJvPEgTVAQ5A8sOSGZnF+f3azSb47E+dpjCM="
+  vault_domain               = local.domain
+  vault_subdomain            = local.vault_subdomain
   istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
 }
 
@@ -80,15 +80,15 @@ module "artifactory_deployment" {
   kubeconfig_context                           = local.kubeconfig_context
   namespace                                    = "artifactory"
   nfs_storage_class_name                       = module.nfs_provisioner.nfs_storage_class_name
-  ingress_class                                = ""
-  http_secured                                 = local.http_secured
   vault_address                                = module.vault_deployment.vault_address
   vault_admin_username                         = module.vault_deployment.vault_admin_username
   vault_admin_password                         = module.vault_deployment.vault_admin_password
   vault_secrets_mountpoint                     = module.vault_deployment.vault_secrets_mountpoint
   postgresql_address                           = module.postgresql.postgresql_service_address
   postgresql_artifactory_database_vault_secret = module.postgresql.postgresql_artifactory_database_vault_secret
-  artifactory_hostname                         = local.artifactory_hostname
+  artifactory_subdomain                        = local.artifactory_subdomain
+  artifactory_domain                           = local.domain
+  istio_ingress_gateway_name                   = module.istio.istio_ingress_gateway_name
   vault_artifactory_license_path               = local.vault_artifactory_license_path
 }
 
@@ -120,10 +120,10 @@ module "gitlab_deployment" {
   nfs_storage_class_name                  = module.nfs_provisioner.nfs_storage_class_name
   gitlab_domain                           = local.domain
   gitlab_subdomain                        = local.gitlab_subdomain
-  //artifactory_regcred_vault_path          = module.artifactory_provisioning.artifactory_regcred_vault_path
-  //artifactory_address                     = module.artifactory_deployment.artifactory_address
-  istio_ingress_gateway_name = module.istio.istio_ingress_gateway_name
-  istio_tls_ca_crt = module.istio.istio_tls_ca_crt
+  artifactory_regcred_vault_path          = module.artifactory_provisioning.artifactory_regcred_vault_path
+  artifactory_address                     = module.artifactory_deployment.artifactory_address
+  istio_ingress_gateway_name              = module.istio.istio_ingress_gateway_name
+  istio_tls_ca_crt                        = module.istio.istio_tls_ca_crt
 }
 
 module "gitlab_provisioning" {

@@ -87,12 +87,15 @@ gitlab-runner:
     config: |
       [[runners]]
         [runners.kubernetes]
-        namespace = "${namespace}"
-        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-072b53a1"
-        image = "alpine:latest"
-        pull_policy = "if-not-present"
-        #image_pull_secrets = ["{regcred_secret}"]
-        privileged = false
+          namespace = "${namespace}"
+          helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-072b53a1"
+          image = "alpine:latest"
+          pull_policy = "if-not-present"
+          image_pull_secrets = ["{regcred_secret}"]
+          privileged = false
+
+          [runners.kubernetes.pod_annotations]
+            "sidecar.istio.io/inject" = "false"
 
         [runners.cache]
           Type = "s3"
@@ -108,18 +111,10 @@ gitlab-runner:
     gitlab.com/prometheus_scrape: "true"
     gitlab.com/prometheus_port: 9252
 
-shared-secrets:
-  annotations:
-    sidecar.istio.io/inject: "false"
-
 gitlab:
   gitaly:
     persistence:
       enabled: true
-
-  migrations:
-    annotations:
-      sidecar.istio.io/inject: "false"
 
 postgresql:
   install: false
@@ -129,7 +124,8 @@ nginx-ingress:
 
 redis:
   persistence:
-    enabled: false
+    enabled: true
+    existingClaim: ${minio_pvc_name}
 
 minio:
   persistence:

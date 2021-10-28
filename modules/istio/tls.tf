@@ -1,5 +1,5 @@
 resource "tls_private_key" "ca_key" {
-  algorithm   = "RSA"
+  algorithm = "RSA"
 }
 
 resource "tls_self_signed_cert" "ca_crt" {
@@ -7,7 +7,7 @@ resource "tls_self_signed_cert" "ca_crt" {
   private_key_pem       = tls_private_key.ca_key.private_key_pem
   is_ca_certificate     = true
   validity_period_hours = 87600
-  allowed_uses          = [
+  allowed_uses = [
     "cert_signing",
     "key_encipherment",
     "digital_signature",
@@ -20,7 +20,7 @@ resource "tls_self_signed_cert" "ca_crt" {
 }
 
 resource "tls_private_key" "domain_key" {
-  algorithm   = "RSA"
+  algorithm = "RSA"
 }
 
 resource "tls_cert_request" "domain_csr" {
@@ -43,20 +43,20 @@ resource "tls_locally_signed_cert" "domain_crt" {
   ca_cert_pem        = tls_self_signed_cert.ca_crt.cert_pem
 
   validity_period_hours = 87600
-  allowed_uses          = [
+  allowed_uses = [
     "key_encipherment",
     "digital_signature",
   ]
 }
 
 resource "local_file" "ca_crt" {
-  content     = tls_self_signed_cert.ca_crt.cert_pem
+  content  = tls_self_signed_cert.ca_crt.cert_pem
   filename = "${path.module}/${local.ca_cert_path}"
 }
 
 resource "kubernetes_secret" "istio_tls" {
   metadata {
-    name = "istio-tls"
+    name      = "istio-tls"
     namespace = kubernetes_namespace.istio_system.metadata[0].name
   }
 

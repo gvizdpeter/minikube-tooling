@@ -46,13 +46,13 @@ variable "postgresql_address" {
   type = string
 }
 
-/*variable "artifactory_regcred_vault_path" {
+variable "artifactory_regcred_vault_path" {
   type = string
 }
 
 variable "artifactory_address" {
   type = string
-}*/
+}
 
 variable "istio_ingress_gateway_name" {
   type = string

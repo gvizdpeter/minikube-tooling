@@ -38,18 +38,18 @@ variable "postgresql_artifactory_database_vault_secret" {
   type = string
 }
 
-variable "artifactory_hostname" {
+variable "artifactory_domain" {
   type = string
 }
 
-variable "ingress_class" {
+variable "artifactory_subdomain" {
   type = string
-}
-
-variable "http_secured" {
-  type = bool
 }
 
 variable "vault_artifactory_license_path" {
+  type = string
+}
+
+variable "istio_ingress_gateway_name" {
   type = string
 }

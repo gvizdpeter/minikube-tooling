@@ -31,10 +31,10 @@ resource "kubernetes_secret" "gitlab_redis_password" {
 module "redis_pvc" {
   source = "./../pvc"
 
-  namespace = kubernetes_namespace.gitlab.metadata[0].name
-  name = "redis-pvc"
-  size = "1Gi"
-  kubeconfig_path = var.kubeconfig_path
+  namespace          = kubernetes_namespace.gitlab.metadata[0].name
+  name               = "redis-pvc"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
   kubeconfig_context = var.kubeconfig_context
   storage_class_name = var.nfs_storage_class_name
 }

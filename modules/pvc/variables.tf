@@ -23,6 +23,6 @@ variable "size" {
 }
 
 variable "access_modes" {
-  type = list(string)
+  type    = list(string)
   default = ["ReadWriteOnce"]
 }

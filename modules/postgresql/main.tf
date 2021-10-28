@@ -44,10 +44,10 @@ resource "kubernetes_secret" "postgresql_admin_password" {
 module "postgresql_pvc" {
   source = "./../pvc"
 
-  namespace = kubernetes_namespace.postgresql.metadata[0].name
-  name = "postgresql-pvc"
-  size = "1Gi"
-  kubeconfig_path = var.kubeconfig_path
+  namespace          = kubernetes_namespace.postgresql.metadata[0].name
+  name               = "postgresql-pvc"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
   kubeconfig_context = var.kubeconfig_context
   storage_class_name = var.nfs_storage_class_name
 }
@@ -74,7 +74,7 @@ resource "helm_release" "postgresql" {
       postgresql_gitlab_username_key      = module.gitlab_database.kubernetes_secret.username_key
       postgresql_gitlab_password_key      = module.gitlab_database.kubernetes_secret.password_key
       postgresql_gitlab_database_key      = module.gitlab_database.kubernetes_secret.database_key
-      pvc_name = module.postgresql_pvc.name
+      pvc_name                            = module.postgresql_pvc.name
     })
   ]
 }

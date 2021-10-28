@@ -89,7 +89,7 @@ resource "kubernetes_secret" "gitlab_runner_registration_token" {
   type = "Opaque"
 }
 
-/*data "vault_generic_secret" "artifactory_regcred_vault_path" {
+data "vault_generic_secret" "artifactory_regcred_vault_path" {
   path = var.artifactory_regcred_vault_path
 }
 
@@ -104,22 +104,22 @@ resource "kubernetes_secret" "artifactory_regcred" {
   }
 
   type = "kubernetes.io/dockerconfigjson"
-}*/
+}
 
 module "gitlab_pvc" {
   source = "./../pvc"
 
-  namespace = kubernetes_namespace.gitlab.metadata[0].name
-  name = "repo-data-gitlab-gitaly-0"
-  size = "1Gi"
-  kubeconfig_path = var.kubeconfig_path
+  namespace          = kubernetes_namespace.gitlab.metadata[0].name
+  name               = "repo-data-gitlab-gitaly-0"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
   kubeconfig_context = var.kubeconfig_context
   storage_class_name = var.nfs_storage_class_name
 }
 
 resource "kubernetes_secret" "istio_tls_ca_crt" {
   metadata {
-    name = "istio-tls-ca-crt"
+    name      = "istio-tls-ca-crt"
     namespace = kubernetes_namespace.gitlab.metadata[0].name
   }
 
@@ -133,18 +133,16 @@ resource "kubernetes_secret" "istio_tls_ca_crt" {
 
 resource "helm_release" "gitlab" {
   name          = local.gitlab_chart_name
-  repository    = "https://charts.gitlab.io"
-  chart         = local.gitlab_chart_name
-  version       = local.gitlab_chart_version
+  chart         = "${path.module}/charts/gitlab"
   namespace     = kubernetes_namespace.gitlab.metadata[0].name
   recreate_pods = true
   timeout       = 600
 
   values = [
     templatefile("${path.module}/values/gitlab.yaml", {
-      release_name = local.gitlab_chart_name
+      release_name                                   = local.gitlab_chart_name
       gitlab_domain                                  = var.gitlab_domain
-      gitlab_subdomain = var.gitlab_subdomain
+      gitlab_subdomain                               = var.gitlab_subdomain
       gitlab_root_password_secret                    = kubernetes_secret.gitlab_root_password.metadata[0].name
       gitlab_root_password_secret_key                = local.gitlab_root_password_secret_key
       postgresql_address                             = local.postgresql_address
@@ -157,13 +155,13 @@ resource "helm_release" "gitlab" {
       gitlab_minio_secret                            = kubernetes_secret.gitlab_minio_secret.metadata[0].name
       gitlab_redis_password_secret                   = kubernetes_secret.gitlab_redis_password.metadata[0].name
       gitlab_redis_password_secret_key               = local.gitlab_redis_password_secret_key
-      //regcred_secret                                 = kubernetes_secret.artifactory_regcred.metadata[0].name
+      regcred_secret                                 = kubernetes_secret.artifactory_regcred.metadata[0].name
       regcred_secret_key                             = local.regcred_secret_key
       namespace                                      = kubernetes_namespace.gitlab.metadata[0].name
-      gitlab_pvc_name = module.gitlab_pvc.name
-      minio_pvc_name = module.minio_pvc.name
-      redis_pvc_name = module.redis_pvc.name
-      istio_tls_ca_crt_secret = kubernetes_secret.istio_tls_ca_crt.metadata[0].name
+      gitlab_pvc_name                                = module.gitlab_pvc.name
+      minio_pvc_name                                 = module.minio_pvc.name
+      redis_pvc_name                                 = module.redis_pvc.name
+      istio_tls_ca_crt_secret                        = kubernetes_secret.istio_tls_ca_crt.metadata[0].name
     })
   ]
 }
@@ -171,23 +169,23 @@ resource "helm_release" "gitlab" {
 module "gitlab_virtual_service" {
   source = "./../istio-virtual-service"
 
-  name = "gitlab"
+  name      = "gitlab"
   namespace = kubernetes_namespace.gitlab.metadata[0].name
-  domain = var.gitlab_domain
+  domain    = var.gitlab_domain
   subdomain = var.gitlab_subdomain
   routes = [
     {
       service_name = "gitlab-webservice-default"
       service_port = 8181
-      prefix = "/"
+      prefix       = "/"
     },
     {
       service_name = "gitlab-webservice-default"
       service_port = 8080
-      prefix = "/admin/sidekiq"
+      prefix       = "/admin/sidekiq"
     }
   ]
   istio_ingress_gateway_name = var.istio_ingress_gateway_name
-  kubeconfig_path = var.kubeconfig_path
-  kubeconfig_context = var.kubeconfig_context
+  kubeconfig_path            = var.kubeconfig_path
+  kubeconfig_context         = var.kubeconfig_context
 }
