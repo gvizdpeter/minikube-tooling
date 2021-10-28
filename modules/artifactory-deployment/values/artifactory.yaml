@@ -246,8 +246,8 @@ artifactory:
           proxy_pass_header   Server;
           proxy_cookie_path   ~*^/.* /;
           proxy_pass          {{ include "artifactory.scheme" . }}://{{ include "artifactory.fullname" . }}:{{ .Values.artifactory.externalPort }}/;
-          proxy_set_header    X-JFrog-Override-Base-Url $http_x_forwarded_proto://$host:$server_port;
-          proxy_set_header    X-Forwarded-Port  $server_port;
+          proxy_set_header    X-JFrog-Override-Base-Url $http_x_forwarded_proto://$host:443;
+          proxy_set_header    X-Forwarded-Port  443;
           proxy_set_header    X-Forwarded-Proto $http_x_forwarded_proto;
           proxy_set_header    Host              $http_host;
           proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
