@@ -74,11 +74,27 @@ prometheus:
 gitlab-runner:
   gitlabUrl: https://${gitlab_subdomain}.${gitlab_domain}/
 
+  concurrent: 1
+
+  checkInterval: 2
+
   install: true
 
   certsSecretName: ${istio_tls_ca_crt_secret}
 
   unregisterRunners: true
+
+  hpa:
+    minReplicas: 1
+    maxReplicas: 10
+    metrics:
+      - type: Custom
+        custom:
+          metric:
+            name: ci_pending_builds
+          target:
+            type: Value
+            value: 1
 
   rbac:
     create: true
@@ -91,7 +107,7 @@ gitlab-runner:
           helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-072b53a1"
           image = "alpine:latest"
           pull_policy = "if-not-present"
-          image_pull_secrets = ["{regcred_secret}"]
+          image_pull_secrets = ["${regcred_secret}"]
           privileged = false
 
           [runners.kubernetes.pod_annotations]
@@ -101,6 +117,7 @@ gitlab-runner:
           Type = "s3"
           Path = "gitlab-runner"
           Shared = true
+
           [runners.cache.s3]
             ServerAddress = {{ include "gitlab-runner.cache-tpl.s3ServerAddress" . }}
             BucketName = "runner-cache"
