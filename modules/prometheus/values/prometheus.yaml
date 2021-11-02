@@ -12,6 +12,17 @@ alertmanager:
   enabled: false
 
 server:
+  global:
+    ## How frequently to scrape targets by default
+    ##
+    scrape_interval: 30s
+    ## How long until a scrape request times out
+    ##
+    scrape_timeout: 10s
+    ## How frequently to evaluate rules
+    ##
+    evaluation_interval: 30s
+
   extraFlags:
     - web.enable-lifecycle
     - storage.tsdb.retention.size=${storage_retention}

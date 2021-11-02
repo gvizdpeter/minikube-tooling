@@ -23,26 +23,6 @@ resource "helm_release" "prometheus" {
   ]
 }
 
-resource "helm_release" "prometheus_adapter" {
-  name          = "prometheus-adapter"
-  repository    = "https://prometheus-community.github.io/helm-charts"
-  chart         = "prometheus-adapter"
-  version       = "3.0.0"
-  namespace     = kubernetes_namespace.prometheus.metadata[0].name
-  recreate_pods = true
-
-  values = [
-    templatefile("${path.module}/values/prometheus-adapter.yaml", {
-      prometheus_url = "http://prometheus-server"
-      prometheus_port = 80
-    })
-  ]
-
-  depends_on = [
-    helm_release.prometheus
-  ]
-}
-
 module "prometheus_virtual_service" {
   source = "./../istio-virtual-service"
 

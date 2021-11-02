@@ -1,0 +1,15 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: gitlab-runner-scaledobject
+  namespace: gitlab
+spec:
+  scaleTargetRef:
+    name: gitlab-gitlab-runner
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-server.prometheus:80
+      metricName: ci_pending_builds
+      threshold: '1'
+      query: sum(ci_pending_builds) or vector(0)

@@ -69,6 +69,9 @@ certmanager:
 prometheus:
   install: false
 
+registry:
+  enabled: false
+
 ## Installation & configuration of gitlab/gitlab-runner
 ## See requirements.yaml for current version
 gitlab-runner:
@@ -83,18 +86,6 @@ gitlab-runner:
   certsSecretName: ${istio_tls_ca_crt_secret}
 
   unregisterRunners: true
-
-  hpa:
-    minReplicas: 1
-    maxReplicas: 10
-    metrics:
-      - type: Custom
-        custom:
-          metric:
-            name: ci_pending_builds
-          target:
-            type: Value
-            value: 1
 
   rbac:
     create: true
@@ -132,6 +123,18 @@ gitlab:
   gitaly:
     persistence:
       enabled: true
+
+  gitlab-shell:
+    minReplicas: 1
+    maxReplicas: 1
+
+  sidekiq:
+    minReplicas: 1
+    maxReplicas: 1
+
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
 
 postgresql:
   install: false

@@ -6,6 +6,14 @@ module "metrics_server" {
   namespace          = "kube-system"
 }
 
+module "keda" {
+  source = "./modules/keda"
+
+  kubeconfig_path    = local.kubeconfig_path
+  kubeconfig_context = local.kubeconfig_context
+  namespace          = "keda"
+}
+
 module "nfs_provisioner" {
   source = "./modules/nfs-provisioner"
 
