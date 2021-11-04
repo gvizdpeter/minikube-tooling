@@ -132,6 +132,7 @@ module "gitlab_deployment" {
   artifactory_address                     = module.artifactory_deployment.artifactory_address
   istio_ingress_gateway_name              = module.istio.istio_ingress_gateway_name
   istio_tls_ca_crt                        = module.istio.istio_tls_ca_crt
+  prometheus_address                      = module.prometheus.prometheus_address
 }
 
 module "gitlab_provisioning" {

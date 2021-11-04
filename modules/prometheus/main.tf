@@ -31,8 +31,8 @@ module "prometheus_virtual_service" {
   domain    = var.prometheus_domain
   subdomain = var.prometheus_subdomain
   routes = [{
-    service_name = "prometheus-server"
-    service_port = 80
+    service_name = local.prometheus_service_name
+    service_port = local.prometheus_service_port
     prefix       = "/"
   }]
   istio_ingress_gateway_name = var.istio_ingress_gateway_name

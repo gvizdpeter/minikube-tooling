@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ${name}
+  namespace: ${namespace}
+spec:
+  scaleTargetRef:
+    name: ${scaled_deployment}
+  pollingInterval: ${polling_interval}
+  cooldownPeriod:  ${cooldown_period}
+  minReplicaCount: ${min_replica_count}
+  maxReplicaCount: ${max_replica_count}
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: ${prometheus_address}
+      metricName: ${metric_name}
+      threshold: '${threshold}'
+      query: ${query}

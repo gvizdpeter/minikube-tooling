@@ -189,3 +189,17 @@ module "gitlab_virtual_service" {
   kubeconfig_path            = var.kubeconfig_path
   kubeconfig_context         = var.kubeconfig_context
 }
+
+module "gitlab_runner_scaled_object" {
+  source = "./../keda-scaled-object"
+
+  name               = "gitlab-runner"
+  namespace          = kubernetes_namespace.gitlab.metadata[0].name
+  kubeconfig_path    = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  scaled_deployment  = "${local.gitlab_chart_name}-gitlab-runner"
+  prometheus_address = var.prometheus_address
+  metric_name        = "ci_pending_builds"
+  threshold          = 1
+  query              = "sum(ci_pending_builds) or vector(0)"
+}

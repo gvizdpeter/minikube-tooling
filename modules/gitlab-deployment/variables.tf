@@ -61,3 +61,7 @@ variable "istio_ingress_gateway_name" {
 variable "istio_tls_ca_crt" {
   type = string
 }
+
+variable "prometheus_address" {
+  type = string
+}
