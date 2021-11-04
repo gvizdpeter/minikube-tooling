@@ -9,3 +9,4 @@ Tooling stack for minikube provisioned by Terraform, that consists of:
 * [JFrog Artifactory](https://jfrog.com/artifactory/)
 * [Gitlab](https://about.gitlab.com/)
 * [Prometheus](https://prometheus.io/)
+* [KEDA](https://keda.sh/)
