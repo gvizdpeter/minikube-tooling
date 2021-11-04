@@ -6,7 +6,7 @@ output "artifactory_admin_vault_path" {
 }
 
 output "artifactory_address" {
-  value = "${var.http_secured ? "https" : "http"}://${var.artifactory_hostname}"
+  value = "https://${var.artifactory_subdomain}.${var.artifactory_domain}"
   depends_on = [
     helm_release.artifactory
   ]

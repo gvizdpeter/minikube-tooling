@@ -1,6 +1,9 @@
 resource "kubernetes_namespace" "postgresql" {
   metadata {
     name = var.namespace
+    labels = {
+      istio-injection = "enabled"
+    }
   }
 }
 
@@ -38,6 +41,17 @@ resource "kubernetes_secret" "postgresql_admin_password" {
   type = "Opaque"
 }
 
+module "postgresql_pvc" {
+  source = "./../pvc"
+
+  namespace          = kubernetes_namespace.postgresql.metadata[0].name
+  name               = "postgresql-pvc"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  storage_class_name = var.nfs_storage_class_name
+}
+
 resource "helm_release" "postgresql" {
   name          = "postgresql"
   repository    = "https://charts.bitnami.com/bitnami"
@@ -60,7 +74,7 @@ resource "helm_release" "postgresql" {
       postgresql_gitlab_username_key      = module.gitlab_database.kubernetes_secret.username_key
       postgresql_gitlab_password_key      = module.gitlab_database.kubernetes_secret.password_key
       postgresql_gitlab_database_key      = module.gitlab_database.kubernetes_secret.database_key
-      storage_class_name                  = var.nfs_storage_class_name
+      pvc_name                            = module.postgresql_pvc.name
     })
   ]
 }

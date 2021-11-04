@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ${name}-virtual-service
+  namespace: ${namespace}
+spec:
+  hosts:
+    - "${subdomain}.${domain}"
+  gateways:
+    - ${istio_ingress_gateway_name}
+  http:
+%{ for route in routes ~}
+    - match:
+      - uri:
+          prefix: "${route.prefix}"
+      route:
+        - destination:
+            host: ${route.service_name}
+            port:
+              number: ${route.service_port}
+%{ endfor ~}

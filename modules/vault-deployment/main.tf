@@ -1,6 +1,9 @@
 resource "kubernetes_namespace" "vault" {
   metadata {
     name = var.namespace
+    labels = {
+      istio-injection = "enabled"
+    }
   }
 }
 
@@ -58,6 +61,17 @@ resource "kubernetes_config_map" "vault_init_configmap" {
   }
 }
 
+module "vault_pvc" {
+  source = "./../pvc"
+
+  namespace          = kubernetes_namespace.vault.metadata[0].name
+  name               = "vault-pvc"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  storage_class_name = var.nfs_storage_class_name
+}
+
 resource "helm_release" "vault" {
   name          = "vault"
   repository    = "https://helm.releases.hashicorp.com"
@@ -68,7 +82,7 @@ resource "helm_release" "vault" {
 
   values = [
     templatefile("${path.module}/values/vault.yaml", {
-      storage_class_name                  = var.nfs_storage_class_name
+      pvc_name                            = module.vault_pvc.name
       vault_unseal_key_base64_secret_name = kubernetes_secret.vault_unseal_key.metadata[0].name
       vault_unseal_key_base64_secret_key  = local.vault_unseal_key_base64_secret_key
       vault_admin_secret_name             = kubernetes_secret.vault_admin.metadata[0].name
@@ -81,39 +95,19 @@ resource "helm_release" "vault" {
   ]
 }
 
-resource "kubernetes_manifest" "vault_ingress" {
-  manifest = {
-    "apiVersion" = "networking.k8s.io/v1"
-    "kind"       = "Ingress"
-    "metadata" = {
-      "annotations" = {
-        "kubernetes.io/ingress.class" = var.ingress_class
-      }
-      "name"      = "vault-ingress"
-      "namespace" = helm_release.vault.namespace
-    }
-    "spec" = {
-      "rules" = [
-        {
-          "host" = var.vault_hostname
-          "http" = {
-            "paths" = [
-              {
-                "backend" = {
-                  "service" = {
-                    "name" = "vault-ui"
-                    "port" = {
-                      "number" = 8200
-                    }
-                  }
-                }
-                "path"     = "/"
-                "pathType" = "Prefix"
-              },
-            ]
-          }
-        },
-      ]
-    }
-  }
+module "vault_virtual_service" {
+  source = "./../istio-virtual-service"
+
+  name      = "vault"
+  namespace = kubernetes_namespace.vault.metadata[0].name
+  domain    = var.vault_domain
+  subdomain = var.vault_subdomain
+  routes = [{
+    service_name = "vault"
+    service_port = 8200
+    prefix       = "/"
+  }]
+  istio_ingress_gateway_name = var.istio_ingress_gateway_name
+  kubeconfig_path            = var.kubeconfig_path
+  kubeconfig_context         = var.kubeconfig_context
 }

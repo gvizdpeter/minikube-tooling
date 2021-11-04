@@ -30,11 +30,11 @@ variable "kubeconfig_context" {
   type = string
 }
 
-variable "http_secured" {
-  type = bool
+variable "gitlab_domain" {
+  type = string
 }
 
-variable "gitlab_domain" {
+variable "gitlab_subdomain" {
   type = string
 }
 
@@ -46,14 +46,22 @@ variable "postgresql_address" {
   type = string
 }
 
-variable "ingress_class" {
-  type = string
-}
-
 variable "artifactory_regcred_vault_path" {
   type = string
 }
 
 variable "artifactory_address" {
+  type = string
+}
+
+variable "istio_ingress_gateway_name" {
+  type = string
+}
+
+variable "istio_tls_ca_crt" {
+  type = string
+}
+
+variable "prometheus_address" {
   type = string
 }

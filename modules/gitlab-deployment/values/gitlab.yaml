@@ -5,19 +5,12 @@ global:
   ## https://docs.gitlab.com/charts/charts/globals#configure-host-settings
   hosts:
     domain: ${gitlab_domain}
-    https: ${http_secured}
+    https: false
 
   ## https://docs.gitlab.com/charts/charts/globals#configure-ingress-settings
   ingress:
     configureCertmanager: false
-    provider: nginx
-    enabled: true
-    annotations:
-      kubernetes.io/ingress.class: ${ingress_class}
-    tls:
-      enabled: ${http_secured}
-    path: /
-    pathType: Prefix
+    enabled: false
 
   ## Initial root password for this GitLab installation
   ## Secret created according to https://docs.gitlab.com/charts/installation/secrets#initial-root-password
@@ -76,10 +69,21 @@ certmanager:
 prometheus:
   install: false
 
+registry:
+  enabled: false
+
 ## Installation & configuration of gitlab/gitlab-runner
 ## See requirements.yaml for current version
 gitlab-runner:
+  gitlabUrl: https://${gitlab_subdomain}.${gitlab_domain}/
+
+  concurrent: 1
+
+  checkInterval: 2
+
   install: true
+
+  certsSecretName: ${istio_tls_ca_crt_secret}
 
   unregisterRunners: true
 
@@ -90,17 +94,21 @@ gitlab-runner:
     config: |
       [[runners]]
         [runners.kubernetes]
-        namespace = "${namespace}"
-        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-072b53a1"
-        image = "alpine:latest"
-        pull_policy = "if-not-present"
-        image_pull_secrets = ["${regcred_secret}"]
-        privileged = false
+          namespace = "${namespace}"
+          helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-072b53a1"
+          image = "alpine:latest"
+          pull_policy = "if-not-present"
+          image_pull_secrets = ["${regcred_secret}"]
+          privileged = false
+
+          [runners.kubernetes.pod_annotations]
+            "sidecar.istio.io/inject" = "false"
 
         [runners.cache]
           Type = "s3"
           Path = "gitlab-runner"
           Shared = true
+
           [runners.cache.s3]
             ServerAddress = {{ include "gitlab-runner.cache-tpl.s3ServerAddress" . }}
             BucketName = "runner-cache"
@@ -115,9 +123,18 @@ gitlab:
   gitaly:
     persistence:
       enabled: true
-      storageClass: ${nfs_storage_class_name}
-      accessMode: ReadWriteOnce
-      size: 1Gi
+
+  gitlab-shell:
+    minReplicas: 1
+    maxReplicas: 1
+
+  sidekiq:
+    minReplicas: 1
+    maxReplicas: 1
+
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
 
 postgresql:
   install: false
@@ -126,17 +143,11 @@ nginx-ingress:
   enabled: false
 
 redis:
-  master:
-    persistence:
-      enabled: true
-      accessModes:
-        - ReadWriteOnce
-      size: 1Gi
-      storageClass: ${nfs_storage_class_name}
+  persistence:
+    enabled: true
+    existingClaim: ${minio_pvc_name}
 
 minio:
   persistence:
     enabled: true
-    accessMode: ReadWriteOnce
-    size: 1Gi
-    storageClass: ${nfs_storage_class_name}
+    existingClaim: ${minio_pvc_name}

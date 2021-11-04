@@ -1,6 +1,9 @@
 resource "kubernetes_namespace" "gitlab" {
   metadata {
     name = var.namespace
+    labels = {
+      istio-injection = "enabled"
+    }
   }
 }
 
@@ -103,21 +106,43 @@ resource "kubernetes_secret" "artifactory_regcred" {
   type = "kubernetes.io/dockerconfigjson"
 }
 
+module "gitlab_pvc" {
+  source = "./../pvc"
+
+  namespace          = kubernetes_namespace.gitlab.metadata[0].name
+  name               = "repo-data-gitlab-gitaly-0"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  storage_class_name = var.nfs_storage_class_name
+}
+
+resource "kubernetes_secret" "istio_tls_ca_crt" {
+  metadata {
+    name      = "istio-tls-ca-crt"
+    namespace = kubernetes_namespace.gitlab.metadata[0].name
+  }
+
+  data = {
+    "${var.gitlab_subdomain}.${var.gitlab_domain}.crt" = var.istio_tls_ca_crt
+  }
+
+  type = "Opaque"
+}
+
+
 resource "helm_release" "gitlab" {
   name          = local.gitlab_chart_name
-  repository    = "https://charts.gitlab.io"
-  chart         = local.gitlab_chart_name
-  version       = local.gitlab_chart_version
+  chart         = "${path.module}/charts/gitlab"
   namespace     = kubernetes_namespace.gitlab.metadata[0].name
   recreate_pods = true
   timeout       = 600
 
   values = [
     templatefile("${path.module}/values/gitlab.yaml", {
+      release_name                                   = local.gitlab_chart_name
       gitlab_domain                                  = var.gitlab_domain
-      nfs_storage_class_name                         = var.nfs_storage_class_name
-      http_secured                                   = var.http_secured ? "true" : "false"
-      ingress_class                                  = var.ingress_class
+      gitlab_subdomain                               = var.gitlab_subdomain
       gitlab_root_password_secret                    = kubernetes_secret.gitlab_root_password.metadata[0].name
       gitlab_root_password_secret_key                = local.gitlab_root_password_secret_key
       postgresql_address                             = local.postgresql_address
@@ -133,6 +158,48 @@ resource "helm_release" "gitlab" {
       regcred_secret                                 = kubernetes_secret.artifactory_regcred.metadata[0].name
       regcred_secret_key                             = local.regcred_secret_key
       namespace                                      = kubernetes_namespace.gitlab.metadata[0].name
+      gitlab_pvc_name                                = module.gitlab_pvc.name
+      minio_pvc_name                                 = module.minio_pvc.name
+      redis_pvc_name                                 = module.redis_pvc.name
+      istio_tls_ca_crt_secret                        = kubernetes_secret.istio_tls_ca_crt.metadata[0].name
     })
   ]
+}
+
+module "gitlab_virtual_service" {
+  source = "./../istio-virtual-service"
+
+  name      = "gitlab"
+  namespace = kubernetes_namespace.gitlab.metadata[0].name
+  domain    = var.gitlab_domain
+  subdomain = var.gitlab_subdomain
+  routes = [
+    {
+      service_name = "gitlab-webservice-default"
+      service_port = 8181
+      prefix       = "/"
+    },
+    {
+      service_name = "gitlab-webservice-default"
+      service_port = 8080
+      prefix       = "/admin/sidekiq"
+    }
+  ]
+  istio_ingress_gateway_name = var.istio_ingress_gateway_name
+  kubeconfig_path            = var.kubeconfig_path
+  kubeconfig_context         = var.kubeconfig_context
+}
+
+module "gitlab_runner_scaled_object" {
+  source = "./../keda-scaled-object"
+
+  name               = "gitlab-runner"
+  namespace          = kubernetes_namespace.gitlab.metadata[0].name
+  kubeconfig_path    = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  scaled_deployment  = "${local.gitlab_chart_name}-gitlab-runner"
+  prometheus_address = var.prometheus_address
+  metric_name        = "ci_pending_builds"
+  threshold          = 1
+  query              = "sum(ci_pending_builds) or vector(0)"
 }

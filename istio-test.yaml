@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: vault-virtual-service
+  namespace: vault
+spec:
+  hosts:
+  - "vault.minikube.com"
+  gateways:
+  - istio-system/istio-ingress-gateway
+  http:
+  - route:
+    - destination:
+        host: vault-ui
+        port:
+          number: 8200

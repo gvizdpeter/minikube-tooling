@@ -12,25 +12,25 @@ alertmanager:
   enabled: false
 
 server:
+  global:
+    ## How frequently to scrape targets by default
+    ##
+    scrape_interval: 30s
+    ## How long until a scrape request times out
+    ##
+    scrape_timeout: 10s
+    ## How frequently to evaluate rules
+    ##
+    evaluation_interval: 30s
+
   extraFlags:
     - web.enable-lifecycle
-    - storage.tsdb.retention.size=${storage_size_in_gb}GB
+    - storage.tsdb.retention.size=${storage_retention}
 
   ingress:
     ## If true, Prometheus server Ingress will be created
     ##
-    enabled: true
-
-    ## Prometheus server Ingress annotations
-    ##
-    annotations:
-      kubernetes.io/ingress.class: ${ingress_class}
-
-    ## Prometheus server Ingress hostnames with optional path
-    ## Must be provided if Ingress is enabled
-    ##
-    hosts:
-      - ${prometheus_hostname}
+    enabled: false
 
   persistentVolume:
     ## If true, Prometheus server will create/use a Persistent Volume Claim
@@ -38,31 +38,13 @@ server:
     ##
     enabled: true
 
-    ## Prometheus server data Persistent Volume access modes
-    ## Must match those of existing PV or dynamic provisioner
-    ## Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-    ##
-    accessModes:
-      - ReadWriteOnce
-
-    ## Prometheus server data Persistent Volume size
-    ##
-    size: ${storage_size_in_gb}Gi
-
-    ## Prometheus server data Persistent Volume Storage Class
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    storageClass: "${nfs_storage_class_name}"
+    existingClaim: "${pvc_name}"
 
   statefulSet:
     ## If true, use a statefulset instead of a deployment for pod management.
     ## This allows to scale replicas to more than 1 pod
     ##
-    enabled: true
+    enabled: false
 
   ##
   retention: ""

@@ -14,10 +14,14 @@ variable "nfs_storage_class_name" {
   type = string
 }
 
-variable "prometheus_hostname" {
+variable "prometheus_subdomain" {
   type = string
 }
 
-variable "ingress_class" {
+variable "prometheus_domain" {
+  type = string
+}
+
+variable "istio_ingress_gateway_name" {
   type = string
 }

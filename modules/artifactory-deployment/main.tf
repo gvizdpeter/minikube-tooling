@@ -39,6 +39,9 @@ resource "vault_generic_secret" "artifactory_admin" {
 resource "kubernetes_namespace" "artifactory" {
   metadata {
     name = var.namespace
+    labels = {
+      istio-injection = "enabled"
+    }
   }
 }
 
@@ -104,9 +107,8 @@ resource "helm_release" "artifactory" {
   values = [
     templatefile("${path.module}/values/artifactory.yaml", {
       nfs_storage_class_name                       = var.nfs_storage_class_name
-      artifactory_hostname                         = var.artifactory_hostname
-      http_protocol                                = var.http_secured ? "https" : "http"
-      ingress_class                                = var.ingress_class
+      artifactory_domain                           = var.artifactory_domain
+      artifactory_subdomain                        = var.artifactory_subdomain
       artifactory_admin_secret                     = kubernetes_secret.artifactory_admin.metadata[0].name
       artifactory_admin_creds_secret_key           = local.admin_creds_secret_key
       postgresql_artifactory_database_secret       = kubernetes_secret.postgresql_artifactory_database_secret.metadata[0].name
@@ -118,4 +120,21 @@ resource "helm_release" "artifactory" {
       artifactory_license_secret_key               = local.artifactory_license_secret_key
     })
   ]
+}
+
+module "artifactory_virtual_service" {
+  source = "./../istio-virtual-service"
+
+  name      = "artifactory"
+  namespace = kubernetes_namespace.artifactory.metadata[0].name
+  domain    = var.artifactory_domain
+  subdomain = var.artifactory_subdomain
+  routes = [{
+    service_name = "artifactory-artifactory-nginx"
+    service_port = 80
+    prefix       = "/"
+  }]
+  istio_ingress_gateway_name = var.istio_ingress_gateway_name
+  kubeconfig_path            = var.kubeconfig_path
+  kubeconfig_context         = var.kubeconfig_context
 }

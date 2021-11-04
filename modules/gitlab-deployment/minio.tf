@@ -40,3 +40,14 @@ resource "kubernetes_secret" "gitlab_minio_secret" {
 
   type = "Opaque"
 }
+
+module "minio_pvc" {
+  source = "./../pvc"
+
+  namespace          = kubernetes_namespace.gitlab.metadata[0].name
+  name               = "minio-pvc"
+  size               = "1Gi"
+  kubeconfig_path    = var.kubeconfig_path
+  kubeconfig_context = var.kubeconfig_context
+  storage_class_name = var.nfs_storage_class_name
+}

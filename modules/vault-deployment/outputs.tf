@@ -22,7 +22,7 @@ output "vault_secrets_mountpoint" {
 }
 
 output "vault_address" {
-  value = "${var.http_secured ? "https" : "http"}://${var.vault_hostname}"
+  value = "https://${var.vault_subdomain}.${var.vault_domain}"
   depends_on = [
     helm_release.vault
   ]
